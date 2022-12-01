@@ -22,7 +22,7 @@ struct p {
 } typedef Player;
 
 struct j {
-    int jogador;            // Jogador que fez retirou uma carta
+    int player;             // Jogador que fez retirou uma carta
     char cards[MAX_CARDS];  // Cartas que o jogador tinha antes de retirar uma
     int quantity;           // Quantidade de cartas que o jogador tinha antes de
                             // retirar uma
@@ -34,74 +34,60 @@ struct j {
 struct js {
     Play *first;  // Ponteiro para a primeira jogada
     Play *last;   // Ponteiro para a última jogada
+    int size;     // Tamanho da lista
 } typedef Plays;
 
 /* Função que mostra mensagens de boas vindas, inicializa a Lista, define os
- nomes de jogadores
-
- @param plays Lista de jogadas
- @param quantity Quantidade de jogadas a serem retornadas
- @param direction Direção da busca
-*/
+ * nomes de jogadores */
 Plays startup(Player players[2]);
 
-/* Função para seguir o jogo no modo player vs player
+// Função que gera 2 cartas aleatórias para cada jogador
+void generateInitialRandomCards(Player players[2], Plays *plays);
 
-*/
+// Função para seguir o jogo no modo player vs player
 void pvp(Plays *plays, Player players[2]);
 
-/* Função para seguir o jogo no modo player vs computador
-
-*/
-void pvc(Plays *plays, Player players[2]);
+// Função para seguir o jogo no modo player vs computador
+void pve(Plays *plays, Player players[2]);
 
 /* Função que retorna as jogadas realizadas, limitadas pela quantidade desejada
  * e com duas direções possíveis, do primeiro em diente, ou do último para trás
-
- @param plays Lista de jogadas
- @param quantity Quantidade de jogadas a serem retornadas
- @param direction Direção da busca (0 - do primeiro para o último, 1 - do
- último)
- @param players Vetor de jogadores
  */
 void showPlays(Plays *plays, int quantity, int direction, Player players[2]);
 
-/* Função que mostra a mão de um jogador
-
- @param player Jogador
- */
+// Função que mostra a mão de um jogador
 void showHand(Player player);
 
-/* Função que atribui uma nova carta para um jogador e registra a jogada
-
- @param playerId Id do jogador
- @param player Jogador
- @param plays Jogadas
- */
+// Função que atribui uma nova carta para um jogador e registra a jogada
 void getCard(int playerId, Player *player, Plays *plays);
 
-/* Função que cria uma nova jogada e a adiciona na lista de jogadas
-
- @param player Jogador
- @param plays Jogadas
- */
+// Função que cria uma nova jogada e a adiciona na lista de jogadas
 void createPlay(Plays *plays, int playerId, Player *player, char retrievedCard);
 
-/* Função que verifica e declara empate ou os ganhadores
+// Função que verifica e declara empate ou os ganhadores
+// gameType = 1 - player vs player, 2 - player vs computador
+void declareWinner(Plays *plays, Player players[2], int gameType);
 
- @param players Jogadores
- */
-void declareWinner(Plays *plays, Player players[2]);
+// Função que retorna em uma jogada da lista
+// gameType = 1 - player vs player, 2 - player vs computador
+void rollback(Plays *plays, Player players[2], int rollBackTo, int direction,
+              int gameType);
+
+// Função que reseta os jogadores
+void resetPlayers(Player players[2]);
 
 int main() {
     Player players[2];
     Plays *plays = malloc(sizeof(Plays));
+
     *plays = startup(players);  // Inicializando e preparando terreno
+
     if (players[1].type == 1) {
         pvp(plays, players);
     } else {
-        pvc(plays, players);
+        pve(plays, players);
     }
+
     return 0;
 }
 
@@ -116,6 +102,7 @@ Plays startup(Player players[2]) {
     Plays plays;
     plays.first = NULL;
     plays.last = NULL;
+    plays.size = 0;
 
     // Obtendo informação do(s) jogador(es)
     printf("Qual o tipo de jogo?\n");
@@ -149,34 +136,38 @@ Plays startup(Player players[2]) {
         Sleep(1000);
     }
 
-    srand(time(NULL));
-    players[0].cards[0] = cards[rand() % 13];
-    players[0].quantity = 1;
-    createPlay(&plays, 0, &players[0], players[0].cards[0]);
-
-    players[0].cards[1] = cards[rand() % 13];
-    players[0].quantity = 2;
-    createPlay(&plays, 0, &players[0], players[0].cards[1]);
-
-    srand(time(NULL) * 2);
-    players[1].cards[0] = cards[rand() % 13];
-    players[1].quantity = 1;
-    createPlay(&plays, 1, &players[1], players[1].cards[0]);
-
-    players[1].cards[1] = cards[rand() % 13];
-    players[1].quantity = 2;
-    createPlay(&plays, 1, &players[1], players[1].cards[1]);
+    generateInitialRandomCards(players, &plays);
 
     system("cls");
 
     return plays;
 }
 
+void generateInitialRandomCards(Player players[2], Plays *plays) {
+    srand(time(NULL));
+    players[0].cards[0] = cards[rand() % 13];
+    players[0].quantity = 1;
+    createPlay(plays, 0, &players[0], players[0].cards[0]);
+
+    players[0].cards[1] = cards[rand() % 13];
+    players[0].quantity = 2;
+    createPlay(plays, 0, &players[0], players[0].cards[1]);
+
+    srand(time(NULL) * 2);
+    players[1].cards[0] = cards[rand() % 13];
+    players[1].quantity = 1;
+    createPlay(plays, 1, &players[1], players[1].cards[0]);
+
+    players[1].cards[1] = cards[rand() % 13];
+    players[1].quantity = 2;
+    createPlay(plays, 1, &players[1], players[1].cards[1]);
+}
+
 void createPlay(Plays *plays, int playerId, Player *player,
                 char retrievedCard) {
     if (plays->first == NULL) {
         plays->first = malloc(sizeof(Play));
-        plays->first->jogador = playerId;
+        plays->first->player = playerId;
         strcpy(plays->first->cards, player->cards);
         plays->first->retrievedCard = retrievedCard;
         plays->first->quantity = player->quantity;
@@ -185,7 +176,7 @@ void createPlay(Plays *plays, int playerId, Player *player,
         plays->last = plays->first;
     } else {
         plays->last->next = malloc(sizeof(Play));
-        plays->last->next->jogador = playerId;
+        plays->last->next->player = playerId;
         strcpy(plays->last->next->cards, player->cards);
         plays->last->next->retrievedCard = retrievedCard;
         plays->last->next->quantity = player->quantity;
@@ -193,6 +184,8 @@ void createPlay(Plays *plays, int playerId, Player *player,
         plays->last->next->prev = plays->last;
         plays->last = plays->last->next;
     }
+
+    plays->size = plays->size + 1;
 }
 
 void showPlays(Plays *plays, int quantity, int direction, Player players[2]) {
@@ -200,13 +193,13 @@ void showPlays(Plays *plays, int quantity, int direction, Player players[2]) {
         Play *current = plays->first;
 
         if (quantity != -1) {
-            printf("Mostrando as %d ultimas jogadas em ordem crescente\n",
+            printf("\nMostrando as %d ultimas jogadas em ordem crescente\n",
                    quantity);
             int i = 0;
             int j;
             while (current != NULL && i < quantity) {
                 printf("Indice: %d\n%s retirou a carta %c e ficou com: ", i,
-                       players[current->jogador], current->retrievedCard);
+                       players[current->player], current->retrievedCard);
 
                 for (j = 0; j < current->quantity; j++) {
                     printf("%c ", current->cards[j]);
@@ -217,12 +210,12 @@ void showPlays(Plays *plays, int quantity, int direction, Player players[2]) {
                 current = current->next;
             }
         } else {
-            printf("Mostrando TODAS as jogadas em ordem crescente\n");
+            printf("\nMostrando TODAS as jogadas em ordem crescente\n");
             int i = 0;
             int j;
             while (current != NULL) {
                 printf("Indice: %d\n%s retirou a carta %c e ficou com: ", i,
-                       players[current->jogador].name, current->retrievedCard);
+                       players[current->player].name, current->retrievedCard);
 
                 for (j = 0; j < current->quantity; j++) {
                     printf("%c ", current->cards[j]);
@@ -237,13 +230,13 @@ void showPlays(Plays *plays, int quantity, int direction, Player players[2]) {
         Play *current = plays->last;
 
         if (quantity != -1) {
-            printf("Mostrando as %d ultimas jogadas em ordem decrescente\n",
+            printf("\nMostrando as %d ultimas jogadas em ordem decrescente\n",
                    quantity);
-            int i = 0;
+            int i = plays->size - 1;
             int j;
-            while (current != NULL && i < quantity) {
+            while (current != NULL && i > plays->size - quantity - 1) {
                 printf("Indice: %d\n%s retirou a carta %c e ficou com: ", i,
-                       players[current->jogador].name, current->retrievedCard);
+                       players[current->player].name, current->retrievedCard);
 
                 for (j = 0; j < current->quantity; j++) {
                     printf("%c ", current->cards[j]);
@@ -254,18 +247,18 @@ void showPlays(Plays *plays, int quantity, int direction, Player players[2]) {
                 current = current->prev;
             }
         } else {
-            printf("Mostrando TODAS as jogadas em ordem decrescente\n");
-            int i = 0;
+            printf("\nMostrando TODAS as jogadas em ordem decrescente\n");
+            int i = plays->size - 1;
             int j;
             while (current != NULL) {
                 printf("Indice: %d\n%s retirou a carta %c e ficou com: ", i,
-                       players[current->jogador].name, current->retrievedCard);
+                       players[current->player].name, current->retrievedCard);
 
                 for (j = 0; j < current->quantity; j++) {
                     printf("%c ", current->cards[j]);
                 }
                 printf("\n\n");
-                i++;
+                i--;
 
                 current = current->prev;
             }
@@ -320,22 +313,20 @@ void checkPoints(Player *player) {
 
 void showHand(Player player) {
     int i;
-    printf("\t\n------Cartas Player %s------\n", player.name);
+    printf("\t\n------Cartas %s------\n", player.name);
 
     for (i = 0; i < player.quantity; i++) {
         if (player.cards[i] == 'D') {
             printf(
-                "---"
-                "|10|"
-                "---"
-                "",
+                "---\n"
+                "|10|\n"
+                "---\n",
                 player.cards[i]);
         } else {
             printf(
-                "---"
-                "|%c|"
-                "---"
-                "",
+                "---\n"
+                "|%c|\n"
+                "---\n",
                 player.cards[i]);
         }
     }
@@ -348,7 +339,7 @@ void showHand(Player player) {
 void pvp(Plays *plays, Player players[2]) {
     int opP1, opP2;
     printf("\t\n-----Jogador contra Jogador-----\n\t");
-    checkPoints(&players[0]), checkPoints(&players[1]);
+    checkPoints(&players[0]);
 
     while (players[0].stopped != 1) {
         printf(
@@ -406,13 +397,13 @@ void pvp(Plays *plays, Player players[2]) {
         checkPoints(&players[1]);
     }
 
-    declareWinner(plays, players);
+    declareWinner(plays, players, 1);
 }
 
-void pvc(Plays *plays, Player players[2]) {
+void pve(Plays *plays, Player players[2]) {
     int op;
     printf("\t\n-----Jogador contra Computador-----\n\t");
-    checkPoints(&players[0]), checkPoints(&players[1]);
+    checkPoints(&players[0]);
 
     while (players[0].stopped != 1) {
         printf(
@@ -440,20 +431,26 @@ void pvc(Plays *plays, Player players[2]) {
         checkPoints(&players[0]);
     }
 
+    checkPoints(&players[1]);
     while (players[1].stopped != 1) {
-        getCard(1, &players[1], plays);
-
-        checkPoints(&players[1]);
         if (players[1].points >= MAX_DEALER_POINTS ||
             players[1].quantity == MAX_DEALER_CARDS) {
             players[1].stopped = 1;
+        } else {
+            getCard(1, &players[1], plays);
         }
+
+        Sleep(1250);
+
+        checkPoints(&players[1]);
+
+        Sleep(1250);
     }
 
-    declareWinner(plays, players);
+    declareWinner(plays, players, 2);
 }
 
-void declareWinner(Plays *plays, Player players[2]) {
+void declareWinner(Plays *plays, Player players[2], int gameType) {
     system("cls");
 
     printf("\n\nPontos %s: %d", players[0].name, players[0].points);
@@ -502,29 +499,133 @@ void declareWinner(Plays *plays, Player players[2]) {
     }
 
     int choice;
-    printf("\n\nDeseja ver as jogadas? (1-Sim; 2-Nao)\n>");
+    printf("\n\nDeseja ver as jogadas? (1-Sim; 2-Nao)\n> ");
     scanf("%d", &choice);
+
+    system("cls");
 
     if (choice == 1) {
         int direction;
         printf(
             "\nDeseja ver em ordem crescente ou decrescente? (1-Crescente; "
-            "2-Decrescente)\n>");
+            "2-Decrescente)\n> ");
         scanf("%d", &direction);
 
         int quantity;
-        printf("\nQuantas jogadas deseja ver? (-1 para todas)\n>");
+        printf("\nQuantas jogadas deseja ver? (-1 para todas)\n> ");
         scanf("%d", &quantity);
 
         showPlays(plays, quantity, direction - 1, players);
 
-        printf("\nDeseja voltar para alguma jogada? (1-Sim; 2-Nao)\n>");
+        printf("\nDeseja voltar para alguma jogada? (1-Sim; 2-Nao)\n> ");
         scanf("%d", &choice);
 
         if (choice == 1) {
             int play;
-            printf("Qual jogada deseja voltar?\n>");
+            printf("Qual jogada deseja voltar?\n> ");
             scanf("%d", &play);
+
+            rollback(plays, players, play, direction - 1, gameType);
+        } else {
+            printf("----------------------------------------------\n");
+            printf("|             Obrigado por jogar!            |\n");
+            printf("|--------------------------------------------|\n");
+            printf("|           1 - Retornar | 2 - Sair          |\n");
+            printf("----------------------------------------------\n\n");
+
+            scanf("%d", &choice);
+
+            system("cls");
+
+            if (choice == 1) {
+                resetPlayers(players);
+                main();
+            } else {
+                exit(0);
+            }
         }
+    }
+}
+
+void resetPlayers(Player players[2]) {
+    players[0].points = 0;
+    players[0].quantity = 0;
+    players[0].stopped = 0;
+    strcpy(players[0].cards, "");
+
+    players[1].points = 0;
+    players[1].quantity = 0;
+    players[1].stopped = 0;
+    strcpy(players[1].cards, "");
+}
+
+void rollback(Plays *plays, Player players[2], int rollBackTo, int direction,
+              int gameType) {
+    resetPlayers(players);
+
+    if (direction == 0) {
+        Play *current = plays->first;
+
+        // Loopando por todas as jogadas e refazendo a mão do jogador
+        for (int i = 0; i < rollBackTo; i++) {
+            if (current->player == 0) {
+                strcpy(players[0].cards, current->cards);
+            } else {
+                strcpy(players[1].cards, current->cards);
+            }
+
+            current = current->next;
+        }
+
+        checkPoints(&players[0]);
+        checkPoints(&players[1]);
+
+        // Definindo a jogada desejada como a última
+        plays->last = NULL;
+        plays->size = rollBackTo + 1;
+
+        // Liberando a memória das jogadas não utilizadas
+        Play *next = current->next;
+        current = current->next;
+        while (next != NULL) {
+            free(current);
+            current = next;
+            next = current->next;
+        }
+
+    } else {
+        Play *current = plays->last;
+
+        for (int i = plays->size - 1; i >= rollBackTo; i--) {
+            if (current->player == 0) {
+                strcpy(players[0].cards, current->cards);
+            } else {
+                strcpy(players[1].cards, current->cards);
+            }
+
+            current = current->prev;
+        }
+
+        checkPoints(&players[0]);
+        checkPoints(&players[1]);
+
+        // Definindo a jogada desejada como a última
+        plays->last = NULL;
+        plays->size = rollBackTo + 1;
+
+        // Liberando a memória das jogadas não utilizadas
+        Play *next = current->next;
+        current = current->next;
+        while (next != NULL) {
+            free(current);
+            current = next;
+            next = current->next;
+        }
+    }
+
+    if (gameType == 1) {
+        pvp(plays, players);
+    } else {
+        pve(plays, players);
     }
 }
