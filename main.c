@@ -91,7 +91,7 @@ void createPlay(Plays *plays, int playerId, Player *player, char retrievedCard);
 
  @param players Jogadores
  */
-void declareWinner(Player players[2]);
+void declareWinner(Plays *plays, Player players[2]);
 
 int main() {
     Player players[2];
@@ -200,7 +200,7 @@ void showPlays(Plays *plays, int quantity, int direction, Player players[2]) {
         Play *current = plays->first;
 
         if (quantity != -1) {
-            printf("Mostrando as %d últimas jogadas em ordem crescente\n",
+            printf("Mostrando as %d ultimas jogadas em ordem crescente\n",
                    quantity);
             int i = 0;
             int j;
@@ -237,13 +237,13 @@ void showPlays(Plays *plays, int quantity, int direction, Player players[2]) {
         Play *current = plays->last;
 
         if (quantity != -1) {
-            printf("Mostrando as %d últimas jogadas em ordem decrescente\n",
+            printf("Mostrando as %d ultimas jogadas em ordem decrescente\n",
                    quantity);
             int i = 0;
             int j;
             while (current != NULL && i < quantity) {
                 printf("Indice: %d\n%s retirou a carta %c e ficou com: ", i,
-                       players[current->jogador], current->retrievedCard);
+                       players[current->jogador].name, current->retrievedCard);
 
                 for (j = 0; j < current->quantity; j++) {
                     printf("%c ", current->cards[j]);
@@ -259,7 +259,7 @@ void showPlays(Plays *plays, int quantity, int direction, Player players[2]) {
             int j;
             while (current != NULL) {
                 printf("Indice: %d\n%s retirou a carta %c e ficou com: ", i,
-                       players[current->jogador], current->retrievedCard);
+                       players[current->jogador].name, current->retrievedCard);
 
                 for (j = 0; j < current->quantity; j++) {
                     printf("%c ", current->cards[j]);
@@ -276,28 +276,13 @@ void showPlays(Plays *plays, int quantity, int direction, Player players[2]) {
 void getCard(int playerId, Player *player, Plays *plays) {
     // Gerando carta aleatória e atribuindo ao jogador
     srand(time(NULL));
-    player->cards[player->quantity] = cards[rand() % 13];
+
+    char card = cards[rand() % 13];
+
+    player->cards[player->quantity] = card;
     player->quantity++;
 
-    // Loopando pela lista até chegar ao último elemento
-    Play *current = plays->first;
-    while (current->next != NULL) {
-        current = current->next;
-    }
-
-    // Alocando memória para o novo elemento
-    Play *newPlay = (Play *)malloc(sizeof(Play));
-
-    // Atribuindo valores ao novo elemento
-    newPlay->jogador = playerId;
-    strcpy(newPlay->cards, player->cards);
-    newPlay->retrievedCard = player->cards[player->quantity - 1];
-    newPlay->next = NULL;
-    newPlay->prev = current;
-
-    // Atribuindo o novo elemento como último da lista
-    current->next = newPlay;
-    plays->last = newPlay;
+    createPlay(plays, playerId, player, card);
 }
 
 void checkPoints(Player *player) {
@@ -421,7 +406,7 @@ void pvp(Plays *plays, Player players[2]) {
         checkPoints(&players[1]);
     }
 
-    declareWinner(*plays, players);
+    declareWinner(plays, players);
 }
 
 void pvc(Plays *plays, Player players[2]) {
@@ -456,79 +441,90 @@ void pvc(Plays *plays, Player players[2]) {
     }
 
     while (players[1].stopped != 1) {
+        getCard(1, &players[1], plays);
+
         checkPoints(&players[1]);
         if (players[1].points >= MAX_DEALER_POINTS ||
             players[1].quantity == MAX_DEALER_CARDS) {
             players[1].stopped = 1;
         }
-        getCard(1, &players[1], plays);
     }
 
-    declareWinner(*plays, players);
+    declareWinner(plays, players);
 }
 
-void declareWinner(Plays plays, Player players[2]) {
+void declareWinner(Plays *plays, Player players[2]) {
     system("cls");
 
     printf("\n\nPontos %s: %d", players[0].name, players[0].points);
-    printf("\n\nPontos %s: %d", players[1].name, players[1].points);
+    printf("\n\nPontos %s: %d\n", players[1].name, players[1].points);
 
-    if (players[0].points == 21 && players[1].points == 21) {
-        printf("\n\nOs dois jogadores fizeram 21 pontos!", players[0].name);
-        return;
-    }
+    int J1Bursted = players[0].points > 21;
+    int J2Bursted = players[1].points > 21;
 
-    if (players[0].points == 21) {
-        printf("\n%s fez 21 pontos!", players[0].name);
-    }
+    if (J1Bursted && J2Bursted) {
+        printf("\n%s e %s estouraram!", players[0].name, players[1].name);
 
-    if (players[1].points == 21) {
-        printf("\n%s fez 21 pontos!", players[1].name);
-    }
+    } else {
+        if (J1Bursted && !J2Bursted) {
+            printf("\n%s estourou!", players[0].name);
+            printf("\n%s venceu!", players[1].name);
+        } else if (!J1Bursted && J2Bursted) {
+            printf("\n%s estourou!", players[1].name);
+            printf("\n%s venceu!", players[0].name);
+        } else {
+            if (players[0].points == 21 && players[1].points == 21) {
+                printf("\n\nOs dois jogadores fizeram 21 pontos!",
+                       players[0].name);
+            }
 
-    if (players[0].points > 21 && players[1].points > 21) {
-        printf("\n\nAmbos os jogadores estouraram!");
-        return;
-    }
+            if (players[0].points == 21) {
+                printf("\n%s fez 21 pontos!", players[0].name);
+            }
 
-    if (players[0].points > 21) {
-        printf("\n%s estourou!", players[0].name);
-    }
+            if (players[1].points == 21) {
+                printf("\n%s fez 21 pontos!", players[1].name);
+            }
 
-    if (players[1].points > 21) {
-        printf("\n%s estourou!", players[1].name);
-    }
+            if (players[0].points > players[1].points) {
+                printf("\n%s venceu!", players[0].name);
+            }
 
-    if (players[0].points > players[1].points) {
-        printf("\n%s venceu!", players[0].name);
-        return;
-    }
+            if (players[1].points > players[0].points) {
+                printf("\n%s venceu!", players[1].name);
+            }
 
-    if (players[1].points > players[0].points) {
-        printf("\n%s venceu!", players[1].name);
-        return;
-    }
-
-    if (players[0].points == players[1].points) {
-        printf("\n\n%s e %s empataram!", players[0].name, players[1].name);
-        return;
+            if (players[0].points == players[1].points) {
+                printf("\n\n%s e %s empataram!", players[0].name,
+                       players[1].name);
+            }
+        }
     }
 
     int choice;
-    printf("Deseja ver as jogadas? (1-Sim; 2-Nao)\n>");
+    printf("\n\nDeseja ver as jogadas? (1-Sim; 2-Nao)\n>");
     scanf("%d", &choice);
 
     if (choice == 1) {
         int direction;
         printf(
-            "Deseja ver em ordem crescente ou decrescente? (1-Crescente; "
+            "\nDeseja ver em ordem crescente ou decrescente? (1-Crescente; "
             "2-Decrescente)\n>");
         scanf("%d", &direction);
 
         int quantity;
-        printf("Quantas jogadas deseja ver? (-1 para todas)\n>");
+        printf("\nQuantas jogadas deseja ver? (-1 para todas)\n>");
         scanf("%d", &quantity);
 
-        showPlays(&plays, quantity, direction, players);
+        showPlays(plays, quantity, direction - 1, players);
+
+        printf("\nDeseja voltar para alguma jogada? (1-Sim; 2-Nao)\n>");
+        scanf("%d", &choice);
+
+        if (choice == 1) {
+            int play;
+            printf("Qual jogada deseja voltar?\n>");
+            scanf("%d", &play);
+        }
     }
 }
