@@ -9,8 +9,8 @@
 #define MAX_DEALER_POINTS 17  // O dealer só pode ter no máximo 17 pontos
 
 char cards[13] = {'A', '2', '3', '4', '5', '6', '7',
-                  '8', '9', 'D', 'J', 'Q', 'K'};  // D = 10, por ser caractere,
-                                                  // não dava pra por '10'
+                  '8', '9', 'D', 'J', 'Q', 'K'};
+// D = 10, por ser caractere, não dava pra por '10'
 
 struct p {
     char name[20];          // Nome do jogador
@@ -25,10 +25,10 @@ struct j {
     int player;             // Jogador que fez retirou uma carta
     char cards[MAX_CARDS];  // Cartas que o jogador tinha antes de retirar uma
     int quantity;           // Quantidade de cartas que o jogador tinha antes de
-                            // retirar uma
-    char retrievedCard;     // Carta que o jogador retirou
-    struct j* next;         // Ponteiro para a próx jogada
-    struct j* prev;         // Ponteiro para a jogada anterior
+    // retirar uma
+    char retrievedCard;  // Carta que o jogador retirou
+    struct j* next;      // Ponteiro para a próx jogada
+    struct j* prev;      // Ponteiro para a jogada anterior
 } typedef Play;
 
 struct js {
@@ -74,6 +74,8 @@ void rollback(Plays* plays, Player players[2], int rollBackTo, int direction,
 void resetPlayers(Player players[2]);
 
 int main() {
+    int i;
+
     // Alocando memória para os jogadores e jogadas
     Player players[2];
     Plays* plays = malloc(sizeof(Plays));
@@ -81,7 +83,7 @@ int main() {
     *plays = startup(players);  // Inicializando e preparando terreno
 
     printf("\n\nDistribuindo cartas");
-    for (int i = 0; i < 3; i++) {
+    for (i = 0; i < 3; i++) {
         printf(".");
         Sleep(250);
     }
@@ -129,8 +131,10 @@ Plays startup(Player players[2]) {
 
     Sleep(1250);
 
+    int i;
+
     printf("\nEmbaralhando cartas");
-    for (int i = 0; i < 3; i++) {
+    for (i = 0; i < 3; i++) {
         printf(".");
         Sleep(1000);
     }
@@ -273,7 +277,8 @@ void getCard(int playerId, Player* player, Plays* plays) {
 void checkPoints(Player* player) {
     // Verificando os valores das cartas e somando os pontos
     int points = 0;
-    for (int i = 0; i < player->quantity; i++) {
+    int i;
+    for (i = 0; i < player->quantity; i++) {
         if (player->cards[i] == 'A') {
             points += 11;
         } else if (player->cards[i] == 'D' || player->cards[i] == 'J' ||
@@ -287,7 +292,7 @@ void checkPoints(Player* player) {
     // Se passou de 21, verifica o valor da carta A (ela vale 11 pontos no
     // início, mas volta a valer 1 no final)
     if (points > 21) {
-        for (int i = 0; i < player->quantity; i++) {
+        for (i = 0; i < player->quantity; i++) {
             if (player->cards[i] == 'A') {
                 points -= 10;
             }
@@ -390,15 +395,15 @@ void pvp(Plays* plays, Player players[2]) {
         system("cls");
 
         switch (opP2) {
-            // Puxa uma carta
+                // Puxa uma carta
             case 1:
                 getCard(1, &players[1], plays);
                 break;
-            // Para de puxar cartas
+                // Para de puxar cartas
             case 2:
                 players[1].stopped = 1;
                 break;
-            // Mostra as jogadas
+                // Mostra as jogadas
             case 3:
                 showPlays(plays, -1, 0, players);
                 break;
@@ -605,6 +610,8 @@ void rollback(Plays* plays, Player players[2], int rollBackTo, int direction,
               int gameType) {
     resetPlayers(players);
 
+    int i;
+
     if (direction == 0) {
         Play* current = plays->first;
 
@@ -619,7 +626,7 @@ void rollback(Plays* plays, Player players[2], int rollBackTo, int direction,
             }
         } else {
             // Loopando por todas as jogadas e refazendo a mão do jogador
-            for (int i = -1; i < rollBackTo; i++) {
+            for (i = 0; i <= rollBackTo; i++) {
                 if (current->player == 0) {
                     strcpy(players[0].cards, current->cards);
                 } else {
@@ -630,9 +637,11 @@ void rollback(Plays* plays, Player players[2], int rollBackTo, int direction,
             }
         }
 
+        // Verificando os pontos restantes
         checkPoints(&players[0]);
         checkPoints(&players[1]);
 
+        // Liberando memória das jogadas que não serão mais utilizadas
         Play* last = plays->last;
         Play* prev = last->prev;
         while (prev != current) {
@@ -642,13 +651,18 @@ void rollback(Plays* plays, Player players[2], int rollBackTo, int direction,
         }
 
         // Definindo a jogada desejada como a última
+        current->next = NULL;
         plays->last = current;
         plays->size = rollBackTo + 1;
 
     } else {
         Play* current = plays->last;
 
-        for (int i = plays->size - 1; i >= rollBackTo; i--) {
+        // Refazendo a mão do(s) jogador
+        // Verificando os pontos restantes
+        // Liberando memória das jogadas que não serão mais utilizadas
+        // Definindo a jogada desejada como a última
+        for (i = plays->size - 1; i >= rollBackTo; i--) {
             if (current->player == 0) {
                 strcpy(players[0].cards, current->cards);
             } else {
@@ -658,9 +672,17 @@ void rollback(Plays* plays, Player players[2], int rollBackTo, int direction,
             current = current->prev;
         }
 
+        // Refazendo a mão do(s) jogador
+        // Verificando os pontos restantes
+        // Liberando memória das jogadas que não serão mais utilizadas
+        // Definindo a jogada desejada como a última
         checkPoints(&players[0]);
         checkPoints(&players[1]);
 
+        // Refazendo a mão do(s) jogador
+        // Verificando os pontos restantes
+        // Liberando memória das jogadas que não serão mais utilizadas
+        // Definindo a jogada desejada como a última
         Play* last = plays->last;
         Play* prev = last->prev;
         while (prev != current) {
@@ -669,11 +691,16 @@ void rollback(Plays* plays, Player players[2], int rollBackTo, int direction,
             last = prev;
         }
 
+        // Refazendo a mão do(s) jogador
+        // Verificando os pontos restantes
+        // Liberando memória das jogadas que não serão mais utilizadas
         // Definindo a jogada desejada como a última
+        current->next = NULL;
         plays->last = current;
         plays->size = rollBackTo + 1;
     }
 
+    // Reiniciando o jogo
     if (gameType == 1) {
         pvp(plays, players);
     } else {
