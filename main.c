@@ -569,6 +569,23 @@ void declareWinner(Plays* plays, Player players[2], int gameType) {
                 exit(0);
             }
         }
+    } else {
+        printf("----------------------------------------------\n");
+        printf("|             Obrigado por jogar!            |\n");
+        printf("|--------------------------------------------|\n");
+        printf("|           1 - Retornar | 2 - Sair          |\n");
+        printf("----------------------------------------------\n\n");
+
+        scanf("%d", &choice);
+
+        system("cls");
+
+        if (choice == 1) {
+            resetPlayers(players);
+            main();
+        } else {
+            exit(0);
+        }
     }
 }
 
