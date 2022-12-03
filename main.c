@@ -48,9 +48,8 @@ void pvp(Plays* plays, Player players[2]);
 void pve(Plays* plays, Player players[2]);
 
 /* Função que retorna as jogadas realizadas, limitadas pela quantidade desejada
- * e com duas direções possíveis, do primeiro em diente, ou do último para trás
  */
-void showPlays(Plays* plays, int quantity, int direction, Player players[2]);
+void showPlays(Plays* plays, int quantity, Player players[2]);
 
 // Função que mostra a mão de um jogador
 void showHand(Player player);
@@ -67,8 +66,7 @@ void declareWinner(Plays* plays, Player players[2], int gameType);
 
 // Função que retorna em uma jogada da lista
 // gameType = 1 - player vs player, 2 - player vs computador
-void rollback(Plays* plays, Player players[2], int rollBackTo, int direction,
-              int gameType);
+void rollback(Plays* plays, Player players[2], int rollBackTo, int gameType);
 
 // Função que reseta os jogadores
 void resetPlayers(Player players[2]);
@@ -162,6 +160,8 @@ Plays startup(Player players[2]) {
 
 void createPlay(Plays* plays, int playerId, Player* player,
                 char retrievedCard) {
+    // Inicialização e alocação de memoria complexa (dispensa explicação)
+
     // Caso seja a primeira jogada, aloca e cria a primeira jogada
     if (plays->first == NULL) {
         plays->first = malloc(sizeof(Play));
@@ -188,80 +188,42 @@ void createPlay(Plays* plays, int playerId, Player* player,
     plays->size = plays->size + 1;
 }
 
-void showPlays(Plays* plays, int quantity, int direction, Player players[2]) {
-    if (direction == 0) {
-        Play* current = plays->first;
+void showPlays(Plays* plays, int quantity, Player players[2]) {
+    Play* current = plays->first;
 
-        if (quantity != -1) {
-            printf("\nMostrando as %d primeiras jogadas em ordem crescente\n",
-                   quantity);
-            int i = 0;
-            int j;
-            while (current != NULL && i < quantity) {
-                printf("Indice: %d\n%s retirou a carta %c e ficou com: ", i,
-                       players[current->player].name, current->retrievedCard);
+    // Verificando se irá mostrar todas as jogadas, ou limitar a algumas
+    if (quantity != -1) {
+        printf("\nMostrando as %d primeiras jogadas em ordem crescente\n",
+               quantity);
+        int i = 0;
+        int j;
+        while (current != NULL && i < quantity) {
+            printf("Indice: %d\n%s retirou a carta %c e ficou com: ", i,
+                   players[current->player].name, current->retrievedCard);
 
-                for (j = 0; j < current->quantity; j++) {
-                    printf("%c ", current->cards[j]);
-                }
-                printf("\n\n");
-                i++;
-
-                current = current->next;
+            for (j = 0; j < current->quantity; j++) {
+                printf("%c ", current->cards[j]);
             }
-        } else {
-            printf("\nMostrando TODAS as jogadas em ordem crescente\n");
-            int i = 0;
-            int j;
-            while (current != NULL) {
-                printf("Indice: %d\n%s retirou a carta %c e ficou com: ", i,
-                       players[current->player].name, current->retrievedCard);
+            printf("\n\n");
+            i++;
 
-                for (j = 0; j < current->quantity; j++) {
-                    printf("%c ", current->cards[j]);
-                }
-                printf("\n\n");
-                i++;
-
-                current = current->next;
-            }
+            current = current->next;
         }
     } else {
-        Play* current = plays->last;
+        printf("\nMostrando TODAS as jogadas em ordem crescente\n");
+        int i = 0;
+        int j;
+        while (current != NULL) {
+            printf("Indice: %d\n%s retirou a carta %c e ficou com: ", i,
+                   players[current->player].name, current->retrievedCard);
 
-        if (quantity != -1) {
-            printf("\nMostrando as %d ultimas jogadas em ordem decrescente\n",
-                   quantity);
-            int i = plays->size - 1;
-            int j;
-            while (current != NULL && i > plays->size - quantity - 1) {
-                printf("Indice: %d\n%s retirou a carta %c e ficou com: ", i,
-                       players[current->player].name, current->retrievedCard);
-
-                for (j = 0; j < current->quantity; j++) {
-                    printf("%c ", current->cards[j]);
-                }
-                printf("\n\n");
-                i--;
-
-                current = current->prev;
+            for (j = 0; j < current->quantity; j++) {
+                printf("%c ", current->cards[j]);
             }
-        } else {
-            printf("\nMostrando TODAS as jogadas em ordem decrescente\n");
-            int i = plays->size;
-            int j;
-            while (current != NULL) {
-                printf("Indice: %d\n%s retirou a carta %c e ficou com: ", i,
-                       players[current->player].name, current->retrievedCard);
+            printf("\n\n");
+            i++;
 
-                for (j = 0; j < current->quantity; j++) {
-                    printf("%c ", current->cards[j]);
-                }
-                printf("\n\n");
-                i--;
-
-                current = current->prev;
-            }
+            current = current->next;
         }
     }
 }
@@ -354,7 +316,7 @@ void pvp(Plays* plays, Player players[2]) {
             printf(
                 "\n%s voce deseja puxar outra carta? (1-Sim; 2-Nao; "
                 "3-Mostrar "
-                "Jogadas)\n>",
+                "Jogadas)\n> ",
                 players[0].name);
             scanf("%d", &opP1);
         }
@@ -372,7 +334,7 @@ void pvp(Plays* plays, Player players[2]) {
                 break;
                 // Mostra as jogadas
             case 3:
-                showPlays(plays, -1, 0, players);
+                showPlays(plays, -1, players);
                 break;
             default:
                 printf("ERRO");
@@ -391,8 +353,8 @@ void pvp(Plays* plays, Player players[2]) {
             printf(
                 "\n%s voce deseja puxar outra carta? (1-Sim; 2-Nao; "
                 "3-Mostrar "
-                "Jogadas)\n>",
-                players[1].name);
+                "Jogadas)\n> ",
+                players[0].name);
             scanf("%d", &opP2);
         }
 
@@ -401,7 +363,7 @@ void pvp(Plays* plays, Player players[2]) {
         switch (opP2) {
                 // Puxa uma carta
             case 1:
-                getCard(1, &players[1], plays);
+                getCard(0, &players[1], plays);
                 break;
                 // Para de puxar cartas
             case 2:
@@ -409,7 +371,7 @@ void pvp(Plays* plays, Player players[2]) {
                 break;
                 // Mostra as jogadas
             case 3:
-                showPlays(plays, -1, 0, players);
+                showPlays(plays, -1, players);
                 break;
             default:
                 printf("ERRO");
@@ -434,7 +396,7 @@ void pve(Plays* plays, Player players[2]) {
             printf(
                 "\n%s voce deseja puxar outra carta? (1-Sim; 2-Nao; "
                 "3-Mostrar "
-                "Jogadas)\n>",
+                "Jogadas)\n> ",
                 players[0].name);
             scanf("%d", &op);
         }
@@ -452,7 +414,7 @@ void pve(Plays* plays, Player players[2]) {
                 break;
                 // Mostra as jogadas
             case 3:
-                showPlays(plays, -1, 0, players);
+                showPlays(plays, -1, players);
                 break;
             default:
                 printf("ERRO");
@@ -539,17 +501,11 @@ void declareWinner(Plays* plays, Player players[2], int gameType) {
     system("cls");
 
     if (choice == 1) {
-        int direction;
-        printf(
-            "\nDeseja ver em ordem crescente ou decrescente? (1-Crescente; "
-            "2-Decrescente)\n> ");
-        scanf("%d", &direction);
-
         int quantity;
-        printf("\nDeseja ver quantas jogadas? (-1 para todas)\n> ");
+        printf("\nDeseja ver ate qual jogada? (-1 para todas)\n> ");
         scanf("%d", &quantity);
 
-        showPlays(plays, quantity, direction - 1, players);
+        showPlays(plays, quantity, players);
 
         printf("\nDeseja voltar para alguma jogada? (1-Sim; 2-Nao)\n> ");
         scanf("%d", &choice);
@@ -559,7 +515,7 @@ void declareWinner(Plays* plays, Player players[2], int gameType) {
             printf("Qual jogada deseja voltar?\n> ");
             scanf("%d", &play);
 
-            rollback(plays, players, play, direction - 1, gameType);
+            rollback(plays, players, play, gameType);
         } else {
             printf("----------------------------------------------\n");
             printf("|             Obrigado por jogar!            |\n");
@@ -610,12 +566,12 @@ void resetPlayers(Player players[2]) {
     strcpy(players[1].cards, "");
 }
 
-void rollback(Plays* plays, Player players[2], int rollBackTo, int direction,
-              int gameType) {
+void rollback(Plays* plays, Player players[2], int rollBackTo, int gameType) {
     // Inicializando as mãos dos jogadores
     strcpy(players[0].cards, "");
     strcpy(players[1].cards, "");
 
+    // Resetando variáveis, para serem repostas pela posição de retorno desejada
     players[0].cards[0] = '\0';
     players[1].cards[0] = '\0';
 
@@ -627,125 +583,84 @@ void rollback(Plays* plays, Player players[2], int rollBackTo, int direction,
 
     int i;
 
-    if (direction == 0) {
-        Play* current = plays->first;
+    Play* current = plays->first;
 
-        if (rollBackTo <= 0) {
-            // Resetando para o primeiro estado
-            if (current->player == 0) {
-                int cardsQuantity = current->quantity;
-                char playerCards[MAX_CARDS];
+    if (rollBackTo <= 0) {
+        // Resetando para o primeiro estado
+        int cardsQuantity = current->quantity;
 
-                int k = 0;
-                for (k; k < cardsQuantity; k++) {
-                    players[0].cards[k] = current->cards[k];
-                }
-                // players[0].cards[k] = '\0';
-            } else {
-                int cardsQuantity = current->quantity;
-                char playerCards[MAX_CARDS];
+        players[0].cards[0] = current->cards[0];
+        players[0].quantity = 1;
 
-                int k = 0;
-                for (k; k < cardsQuantity; k++) {
-                    players[1].cards[k] = current->cards[k];
-                }
-                // players[1].cards[k] = '\0';
-            }
-        } else {
-            // Loopando por todas as jogadas e refazendo a mão do jogador
-            for (i = -1; i < rollBackTo - 1; i++) {
-                if (current == NULL) continue;
-
-                if (current->player == 0) {
-                    int cardsQuantity = current->quantity;
-                    char playerCards[MAX_CARDS];
-
-                    int k = 0;
-                    for (k; k < cardsQuantity; k++) {
-                        players[0].cards[k] = current->cards[k];
-                    }
-                    // players[0].cards[k] = '\0';
-                } else {
-                    int cardsQuantity = current->quantity;
-                    char playerCards[MAX_CARDS];
-
-                    int k = 0;
-                    for (k; k < cardsQuantity; k++) {
-                        players[1].cards[k] = current->cards[k];
-                    }
-                    // players[1].cards[k] = '\0';
-                }
-
-                current = current->next;
-            }
-        }
-
-        // Verificando os pontos restantes
-        // checkPoints(&players[0]);
-        // checkPoints(&players[1]);
-
-        // Liberando memória das jogadas que não serão mais utilizadas
-        Play* last = plays->last;
-        Play* prev = last->prev;
-        while (prev != current) {
-            prev = last->prev;
-            free(last);
-            last = prev;
-        }
-
-        // Definindo a jogada desejada como a última
-        current->next = NULL;
-        plays->last = current;
-        plays->size = rollBackTo + 1;
-
+        strcpy(players[1].cards, "");
+        players[1].quantity = 0;
     } else {
-        Play* current = plays->last;
-
-        // Refazendo a mão do(s) jogador
-        for (i = plays->size - 1; i >= rollBackTo; i--) {
+        // Loopando por todas as jogadas e refazendo a mão do jogador
+        for (i = -1; i < rollBackTo - 1; i++) {
             if (current == NULL) continue;
 
             if (current->player == 0) {
                 int cardsQuantity = current->quantity;
                 char playerCards[MAX_CARDS];
 
+                strcpy(players[0].cards, "");
+                players[1].quantity = 0;
+
+                // Recriando a mão do jogador a partir da jogada
                 int k = 0;
                 for (k; k < cardsQuantity; k++) {
                     players[0].cards[k] = current->cards[k];
+                    players[0].quantity = k + 1;
                 }
+
+                k++;
+
+                players[0].cards[k] = current->retrievedCard;
+                players[0].quantity = k;
+
                 // players[0].cards[k] = '\0';
             } else {
                 int cardsQuantity = current->quantity;
                 char playerCards[MAX_CARDS];
 
+                strcpy(players[1].cards, "");
+                players[1].quantity = 0;
+
                 int k = 0;
                 for (k; k < cardsQuantity; k++) {
                     players[1].cards[k] = current->cards[k];
+                    players[1].quantity = k + 1;
                 }
+
+                k++;
+
+                players[1].cards[k] = current->retrievedCard;
+                players[1].quantity = k;
+
                 // players[1].cards[k] = '\0';
             }
 
-            current = current->prev;
+            current = current->next;
         }
-
-        // Verificando os pontos restantes
-        checkPoints(&players[0]);
-        checkPoints(&players[1]);
-
-        // Liberando memória das jogadas que não serão mais utilizadas
-        Play* last = plays->last;
-        Play* prev = last->prev;
-        while (prev != current) {
-            prev = last->prev;
-            free(last);
-            last = prev;
-        }
-
-        // Definindo a jogada desejada como a última
-        current->next = NULL;
-        plays->last = current;
-        plays->size = rollBackTo + 1;
     }
+
+    // Verificando os pontos restantes
+    // checkPoints(&players[0]);
+    // checkPoints(&players[1]);
+
+    // Liberando memória das jogadas que não serão mais utilizadas
+    Play* last = plays->last;
+    Play* prev = last->prev;
+    while (prev != current) {
+        prev = last->prev;
+        free(last);
+        last = prev;
+    }
+
+    // Definindo a jogada desejada como a última
+    current->next = NULL;
+    plays->last = current;
+    plays->size = rollBackTo;
 
     // Reiniciando o jogo
     if (gameType == 1) {
@@ -755,6 +670,7 @@ void rollback(Plays* plays, Player players[2], int rollBackTo, int direction,
     }
 }
 
+// Verficando se não veio lixo de memória
 int isValidCard(char card) {
     if (card == 'A' || card == '2' || card == '3' || card == '4' ||
         card == '5' || card == '6' || card == '7' || card == '8' ||
