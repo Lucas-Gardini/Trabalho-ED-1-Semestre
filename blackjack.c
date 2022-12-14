@@ -117,80 +117,86 @@ Plays startup(Player players[2]) {
     // Resetando a dificuldade
     difficulty = -1;
 
-    // Obtendo informação do(s) jogador(es)
+// Obtendo informação do(s) jogador(es)
+start:
     printf("Qual o tipo de jogo?\n");
     printf("1 - Jogador vs Jogador\n2 - Jogador vs Computador\n> ");
     scanf("%d", &players[1].type);
 
-    if (players[1].type == 2) {
-        // Obtendo a dificuldade do jogo
-        while (difficulty < 1 || difficulty > 3) {
-            printf("\nQual a dificuldade do jogo?\n");
-            printf("1 - Facil\n2 - Medio\n3 - Dificil\n> ");
-            scanf("%d", &difficulty);
+    if (players[1].type > 2 || players[1].type < 1) {
+        printf("\n\nOpcao invalida!!\n\n");
+        goto start;
+    } else {
+        if (players[1].type == 2) {
+            // Obtendo a dificuldade do jogo
+            while (difficulty < 1 || difficulty > 3) {
+                printf("\nQual a dificuldade do jogo?\n");
+                printf("1 - Facil\n2 - Medio\n3 - Dificil\n> ");
+                scanf("%d", &difficulty);
 
-            if (difficulty < 1 || difficulty > 3) {
-                printf("\nDificuldade invalida!\n");
+                if (difficulty < 1 || difficulty > 3) {
+                    printf("\nDificuldade invalida!\n");
+                }
+            }
+
+            // Definindo a quantidade de voltas
+            if (difficulty == 1) {
+                rollbacksLeft = 3;
+            } else if (difficulty == 2) {
+                rollbacksLeft = 1;
+            } else {
+                rollbacksLeft = 0;
             }
         }
 
-        // Definindo a quantidade de voltas
-        if (difficulty == 1) {
-            rollbacksLeft = 3;
-        } else if (difficulty == 2) {
-            rollbacksLeft = 1;
+        printf("\nDigite o nome do jogador 1\n> ");
+        scanf("%s", &players[0].name);
+        players[0].type = 1;
+
+        if (players[1].type == 1) {
+            printf("\nDigite o nome do jogador 2\n> ");
+            scanf("%s", &players[1].name);
         } else {
-            rollbacksLeft = 0;
+            strcpy(players[1].name, "Computador");
         }
+
+        if (players[1].type == 2) {
+            printf("\n%s voce tera %d chances de voltar em alguma jogada!\n",
+                   players[0].name, rollbacksLeft);
+
+            Sleep(3000);
+        }
+
+        printf("\n| %s VS %s |\n", players[0].name, players[1].name);
+
+        Sleep(1250);
+
+        int i;
+
+        printf("\nEmbaralhando cartas");
+        for (i = 0; i < 3; i++) {
+            printf(".");
+            Sleep(1000);
+        }
+
+        // Inicializando as mãos dos jogadores
+        strcpy(players[0].cards, "");
+        strcpy(players[1].cards, "");
+
+        // Inicializando as variáveis de controle
+        players[0].quantity = 0;
+        players[1].quantity = 0;
+
+        players[0].stopped = 0;
+        players[1].stopped = 0;
+
+        players[0].points = 0;
+        players[1].points = 0;
+
+        system("cls");
+
+        return plays;
     }
-
-    printf("\nDigite o nome do jogador 1\n> ");
-    scanf("%s", &players[0].name);
-    players[0].type = 1;
-
-    if (players[1].type == 1) {
-        printf("\nDigite o nome do jogador 2\n> ");
-        scanf("%s", &players[1].name);
-    } else {
-        strcpy(players[1].name, "Computador");
-    }
-
-    if (players[1].type == 2) {
-        printf("\n%s voce tera %d chances de voltar em alguma jogada!\n",
-               players[0].name, rollbacksLeft);
-
-        Sleep(3000);
-    }
-
-    printf("\n| %s VS %s |\n", players[0].name, players[1].name);
-
-    Sleep(1250);
-
-    int i;
-
-    printf("\nEmbaralhando cartas");
-    for (i = 0; i < 3; i++) {
-        printf(".");
-        Sleep(1000);
-    }
-
-    // Inicializando as mãos dos jogadores
-    strcpy(players[0].cards, "");
-    strcpy(players[1].cards, "");
-
-    // Inicializando as variáveis de controle
-    players[0].quantity = 0;
-    players[1].quantity = 0;
-
-    players[0].stopped = 0;
-    players[1].stopped = 0;
-
-    players[0].points = 0;
-    players[1].points = 0;
-
-    system("cls");
-
-    return plays;
 }
 
 void createPlay(Plays* plays, int playerId, Player* player,
@@ -404,7 +410,7 @@ void pvp(Plays* plays, Player players[2]) {
                 showPlays(plays, -1, players);
                 break;
             default:
-                printf("Opcao invalida\n");
+                printf("Opcao invalida!!\n");
                 break;
         }
 
@@ -441,7 +447,7 @@ void pvp(Plays* plays, Player players[2]) {
                 showPlays(plays, -1, players);
                 break;
             default:
-                printf("Opcao invalida\n");
+                printf("Opcao invalida!!\n");
                 break;
         }
 
@@ -483,7 +489,7 @@ void pve(Plays* plays, Player players[2]) {
                 showPlays(plays, -1, players);
                 break;
             default:
-                printf("Opcao invalida\n");
+                printf("Opcao invalida!!\n");
                 break;
         }
 
@@ -536,7 +542,6 @@ void declareWinner(Plays* plays, Player players[2], int gameType) {
 
     if (J1Bursted && J2Bursted) {
         printf("\n%s e %s estouraram!", players[0].name, players[1].name);
-
     } else {
         if (J1Bursted && !J2Bursted) {
             printf("\n%s estourou!", players[0].name);
@@ -574,18 +579,30 @@ void declareWinner(Plays* plays, Player players[2], int gameType) {
     }
 
     int choice;
+chose:
     printf("\n\nDeseja ver as jogadas? (1-Sim; 2-Nao)\n> ");
     scanf("%d", &choice);
 
     system("cls");
 
     if (choice == 1) {
-        int quantity;
-        printf("\nDeseja ver ate qual jogada? (-1 para todas)\n> ");
+        Play* current = plays->first;
+        int quantity, i = 0;
+        while (current != NULL) {
+            current = current->next;
+            i++;
+        }
+    opitions:
+        printf(
+            "\nDeseja ver ate qual jogada (numero de jogadas: %d)? (-1 para "
+            "todas)\n> ",
+            i);
         scanf("%d", &quantity);
-
+        if (quantity > i || quantity < -1) {
+            printf("\nOpcao invalida!!\n");
+            goto opitions;
+        }
         showPlays(plays, quantity, players);
-
         if (rollbacksLeft == 0) {
             if (gameType == 2) {
                 printf("Voce nao tem mais voltas no tempo!\n");
@@ -593,18 +610,43 @@ void declareWinner(Plays* plays, Player players[2], int gameType) {
 
             Sleep(1000);
         } else {
+        choice2:
             printf("\nDeseja voltar para alguma jogada? (1-Sim; 2-Nao)\n> ");
             scanf("%d", &choice);
-
             if (choice == 1) {
+                rollbacksLeft -= 1;
                 int play;
+            loop:
                 printf("Qual jogada deseja voltar?\n> ");
                 scanf("%d", &play);
-
+                if (play > i || play < 0) {
+                    printf("\nEsta jogada não existe!!\n");
+                    goto loop;
+                }
                 return rollback(plays, players, play, gameType);
+            } else if (choice < 1 || choice > 2) {
+                printf("\nOpcao invalida!!\n");
+                goto choice2;
             }
         }
 
+        printf("----------------------------------------------\n");
+        printf("|             Obrigado por jogar!            |\n");
+        printf("|--------------------------------------------|\n");
+        printf("|           1 - Retornar | 2 - Sair          |\n");
+        printf("----------------------------------------------\n\n");
+
+        scanf("%d", &choice);
+
+        system("cls");
+
+        if (choice == 1) {
+            resetPlayers(players);
+            main();
+        } else {
+            exit(0);
+        }
+    } else if (choice == 2) {
         printf("----------------------------------------------\n");
         printf("|             Obrigado por jogar!            |\n");
         printf("|--------------------------------------------|\n");
@@ -622,22 +664,8 @@ void declareWinner(Plays* plays, Player players[2], int gameType) {
             exit(0);
         }
     } else {
-        printf("----------------------------------------------\n");
-        printf("|             Obrigado por jogar!            |\n");
-        printf("|--------------------------------------------|\n");
-        printf("|           1 - Retornar | 2 - Sair          |\n");
-        printf("----------------------------------------------\n\n");
-
-        scanf("%d", &choice);
-
-        system("cls");
-
-        if (choice == 1) {
-            resetPlayers(players);
-            main();
-        } else {
-            exit(0);
-        }
+        printf("\nOpcao invalida!!\n");
+        goto chose;
     }
 }
 
