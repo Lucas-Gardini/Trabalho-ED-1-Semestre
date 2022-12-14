@@ -8,12 +8,9 @@
 #define MAX_DEALER_CARDS 5    // O dealer só pode ter no máximo 5 cartas
 #define MAX_DEALER_POINTS 17  // O dealer só pode ter no máximo 17 pontos
 
-// Variáveis globais
 char cards[13] = {'A', '2', '3', '4', '5', '6', '7',
-                  '8', '9', 'D', 'J', 'Q', 'K'};  // D = 10, por ser caractere,
-                                                  // não dava pra por '10'
-int difficulty;  // Dificuldade do jogo (1 - fácil, 2 - médio, 3 - difícil)
-int rollbacksLeft;  // Quantidade de voltas que o jogador pode dar
+                  '8', '9', 'D', 'J', 'Q', 'K'};
+// D = 10, por ser caractere, não dava pra por '10'
 
 struct p {
     char name[20];          // Nome do jogador
@@ -119,17 +116,6 @@ Plays startup(Player players[2]) {
     printf("1 - Jogador vs Jogador\n2 - Jogador vs Computador\n> ");
     scanf("%d", &players[1].type);
 
-    // Obtendo a dificuldade do jogo
-    while (difficulty < 1 || difficulty > 3) {
-        printf("\nQual a dificuldade do jogo?\n");
-        printf("1 - Facil\n2 - Medio\n3 - Dificil\n> ");
-        scanf("%d", &difficulty);
-
-        if (difficulty < 1 || difficulty > 3) {
-            printf("\nDificuldade invalida!\n");
-        }
-    }
-
     printf("\nDigite o nome do jogador 1\n> ");
     scanf("%s", &players[0].name);
     players[0].type = 1;
@@ -176,61 +162,29 @@ void createPlay(Plays* plays, int playerId, Player* player,
                 char retrievedCard) {
     // Inicialização e alocação de memoria complexa (dispensa explicação)
 
+    // Caso seja a primeira jogada, aloca e cria a primeira jogada
     if (plays->first == NULL) {
-        // Caso seja a primeira jogada, aloca e cria a primeira jogada
         plays->first = malloc(sizeof(Play));
-
-        // Definindo o jogador
         plays->first->player = playerId;
-
-        // Copiando as cartas do jogador para a jogada
         strcpy(plays->first->cards, player->cards);
-
-        // Adicionando o caractere de fim de string para evitar bugs
         plays->first->cards[strlen(plays->first->cards)] = '\0';
-
-        // Salvando a carta retirada
         plays->first->retrievedCard = retrievedCard;
-
-        // Salvando a quantidade de cartas do jogador
         plays->first->quantity = player->quantity;
-
-        // Definindo os ponteiros para NULL
         plays->first->next = NULL;
         plays->first->prev = NULL;
-
-        // Definindo o último elemento da lista como o primeiro
         plays->last = plays->first;
     } else {
-        // Caso não seja a primeira jogada, aloca e cria a jogada
         plays->last->next = malloc(sizeof(Play));
-
-        // Definindo o jogador
         plays->last->next->player = playerId;
-
-        // Copiando as cartas do jogador para a jogada
         strcpy(plays->last->next->cards, player->cards);
-
-        // Adicionando o caractere de fim de string para evitar bugs
         plays->last->next->cards[strlen(plays->last->next->cards)] = '\0';
-
-        // Salvando a carta retirada
         plays->last->next->retrievedCard = retrievedCard;
-
-        // Salvando a quantidade de cartas do jogador
         plays->last->next->quantity = player->quantity;
-
-        // Definindo o ponteiro do próximo para NULL
         plays->last->next->next = NULL;
-
-        // Definindo o ponteiro do anterior para o último elemento
         plays->last->next->prev = plays->last;
-
-        // Definindo o último elemento da lista como o novo elemento
         plays->last = plays->last->next;
     }
 
-    // Incrementando o tamanho da lista de jogadas
     plays->size = plays->size + 1;
 }
 
@@ -383,7 +337,7 @@ void pvp(Plays* plays, Player players[2]) {
                 showPlays(plays, -1, players);
                 break;
             default:
-                printf("Opcao invalida\n");
+                printf("ERRO");
                 break;
         }
 
@@ -420,7 +374,7 @@ void pvp(Plays* plays, Player players[2]) {
                 showPlays(plays, -1, players);
                 break;
             default:
-                printf("Opcao invalida\n");
+                printf("ERRO");
                 break;
         }
 
@@ -440,7 +394,8 @@ void pve(Plays* plays, Player players[2]) {
             op = 1;
         } else {
             printf(
-                "\n%s voce deseja puxar outra carta? (1-Sim; 2-Nao; 3-Mostrar "
+                "\n%s voce deseja puxar outra carta? (1-Sim; 2-Nao; "
+                "3-Mostrar "
                 "Jogadas)\n> ",
                 players[0].name);
             scanf("%d", &op);
@@ -462,7 +417,7 @@ void pve(Plays* plays, Player players[2]) {
                 showPlays(plays, -1, players);
                 break;
             default:
-                printf("Opcao invalida\n");
+                printf("ERRO");
                 break;
         }
 
@@ -552,38 +507,32 @@ void declareWinner(Plays* plays, Player players[2], int gameType) {
 
         showPlays(plays, quantity, players);
 
-        if (rollbacksLeft == 0) {
-            printf("Voce nao tem mais voltas no tempo!\n");
-
-            Sleep(1000);
-        } else {
-            printf("\nDeseja voltar para alguma jogada? (1-Sim; 2-Nao)\n> ");
-            scanf("%d", &choice);
-
-            if (choice == 1) {
-                int play;
-                printf("Qual jogada deseja voltar?\n> ");
-                scanf("%d", &play);
-
-                return rollback(plays, players, play, gameType);
-            }
-        }
-
-        printf("----------------------------------------------\n");
-        printf("|             Obrigado por jogar!            |\n");
-        printf("|--------------------------------------------|\n");
-        printf("|           1 - Retornar | 2 - Sair          |\n");
-        printf("----------------------------------------------\n\n");
-
+        printf("\nDeseja voltar para alguma jogada? (1-Sim; 2-Nao)\n> ");
         scanf("%d", &choice);
 
-        system("cls");
-
         if (choice == 1) {
-            resetPlayers(players);
-            main();
+            int play;
+            printf("Qual jogada deseja voltar?\n> ");
+            scanf("%d", &play);
+
+            rollback(plays, players, play, gameType);
         } else {
-            exit(0);
+            printf("----------------------------------------------\n");
+            printf("|             Obrigado por jogar!            |\n");
+            printf("|--------------------------------------------|\n");
+            printf("|           1 - Retornar | 2 - Sair          |\n");
+            printf("----------------------------------------------\n\n");
+
+            scanf("%d", &choice);
+
+            system("cls");
+
+            if (choice == 1) {
+                resetPlayers(players);
+                main();
+            } else {
+                exit(0);
+            }
         }
     } else {
         printf("----------------------------------------------\n");
