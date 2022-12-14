@@ -114,19 +114,33 @@ Plays startup(Player players[2]) {
     plays.last = NULL;
     plays.size = 0;
 
+    // Resetando a dificuldade
+    difficulty = -1;
+
     // Obtendo informação do(s) jogador(es)
     printf("Qual o tipo de jogo?\n");
     printf("1 - Jogador vs Jogador\n2 - Jogador vs Computador\n> ");
     scanf("%d", &players[1].type);
 
-    // Obtendo a dificuldade do jogo
-    while (difficulty < 1 || difficulty > 3) {
-        printf("\nQual a dificuldade do jogo?\n");
-        printf("1 - Facil\n2 - Medio\n3 - Dificil\n> ");
-        scanf("%d", &difficulty);
+    if (players[1].type == 2) {
+        // Obtendo a dificuldade do jogo
+        while (difficulty < 1 || difficulty > 3) {
+            printf("\nQual a dificuldade do jogo?\n");
+            printf("1 - Facil\n2 - Medio\n3 - Dificil\n> ");
+            scanf("%d", &difficulty);
 
-        if (difficulty < 1 || difficulty > 3) {
-            printf("\nDificuldade invalida!\n");
+            if (difficulty < 1 || difficulty > 3) {
+                printf("\nDificuldade invalida!\n");
+            }
+        }
+
+        // Definindo a quantidade de voltas
+        if (difficulty == 1) {
+            rollbacksLeft = 3;
+        } else if (difficulty == 2) {
+            rollbacksLeft = 1;
+        } else {
+            rollbacksLeft = 0;
         }
     }
 
@@ -139,6 +153,13 @@ Plays startup(Player players[2]) {
         scanf("%s", &players[1].name);
     } else {
         strcpy(players[1].name, "Computador");
+    }
+
+    if (players[1].type == 2) {
+        printf("\n%s voce tera %d chances de voltar em alguma jogada!\n",
+               players[0].name, rollbacksLeft);
+
+        Sleep(3000);
     }
 
     printf("\n| %s VS %s |\n", players[0].name, players[1].name);
@@ -356,7 +377,7 @@ void pvp(Plays* plays, Player players[2]) {
     checkPoints(&players[0]);
 
     while (players[0].stopped != 1) {
-        if (players[0].quantity == 0) {
+        if (players[0].quantity == 0 || players[0].quantity == 1) {
             opP1 = 1;
         } else {
             printf(
@@ -393,14 +414,14 @@ void pvp(Plays* plays, Player players[2]) {
     system("cls");
     checkPoints(&players[1]);
     while (players[1].stopped != 1) {
-        if (players[1].quantity == 0) {
+        if (players[1].quantity == 0 || players[1].quantity == 1) {
             opP2 = 1;
         } else {
             printf(
                 "\n%s voce deseja puxar outra carta? (1-Sim; 2-Nao; "
                 "3-Mostrar "
                 "Jogadas)\n> ",
-                players[0].name);
+                players[1].name);
             scanf("%d", &opP2);
         }
 
@@ -436,7 +457,7 @@ void pve(Plays* plays, Player players[2]) {
     checkPoints(&players[0]);
 
     while (players[0].stopped != 1) {
-        if (players[0].quantity == 0) {
+        if (players[0].quantity == 0 || players[0].quantity == 1) {
             op = 1;
         } else {
             printf(
@@ -480,7 +501,7 @@ void pve(Plays* plays, Player players[2]) {
             getCard(1, &players[1], plays);
         }
 
-        Sleep(1250);
+        Sleep(500);
 
         if (players[1].stopped == 0) {
             checkPoints(&players[1]);
@@ -494,8 +515,21 @@ void pve(Plays* plays, Player players[2]) {
 void declareWinner(Plays* plays, Player players[2], int gameType) {
     system("cls");
 
+    printf("Declarando o vencedor!\n");
+
+    printf(
+        "  _______\n"
+        " |       |\n"
+        "(|  ED1  |)\n"
+        " |  IFSP |\n"
+        "  \\     /\n"
+        "   `---'\n"
+        "   _|_|_\n");
+
     printf("\n\nPontos %s: %d", players[0].name, players[0].points);
     printf("\n\nPontos %s: %d\n", players[1].name, players[1].points);
+
+    Sleep(5000);
 
     int J1Bursted = players[0].points > 21;
     int J2Bursted = players[1].points > 21;
@@ -553,7 +587,9 @@ void declareWinner(Plays* plays, Player players[2], int gameType) {
         showPlays(plays, quantity, players);
 
         if (rollbacksLeft == 0) {
-            printf("Voce nao tem mais voltas no tempo!\n");
+            if (gameType == 2) {
+                printf("Voce nao tem mais voltas no tempo!\n");
+            }
 
             Sleep(1000);
         } else {
